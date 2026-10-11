@@ -311,7 +311,8 @@ function pushRemote(immediate){
         const ss=String(d.getSeconds()).padStart(2,'0');
         setSaveStatus('云端已同步 '+hh+':'+mm+':'+ss,'saved');
         try{localStorage.setItem(LS_KEY,JSON.stringify(DATA));}catch(e){}
-        renderAll();
+        const activeCell=document.activeElement&&document.activeElement.closest?document.activeElement.closest('#tbody .cell-input'):null;
+        if(!activeCell){renderAll();}
       }).catch(err=>{
         console.warn('云端同步失败：',err);
         setSaveStatus('云端同步失败，请检查网络','saving');
@@ -693,6 +694,7 @@ tbody.addEventListener('click',e=>{
 
 document.getElementById('btnAdd').onclick=()=>{
   const blank={
+    _id:(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('id_'+Date.now()+'_'+Math.floor(Math.random()*1e6)),
     code:'',module:'综合行政',type:'日常例行',source:'周计划',
     owner:'王旭',position:'部门负责人',support:'无',
     priority:'P2',progress:'0%',status:'未开始',reasonType:'无',risk:'低',
