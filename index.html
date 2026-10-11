@@ -236,7 +236,7 @@ function ensureRowMeta(row){
     const base=(row.code&&String(row.code).trim())||'';
     row._id=base||((typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('id_'+Date.now()+'_'+Math.floor(Math.random()*1e6)));
   }
-  if(typeof row.updatedAt!=='number')row.updatedAt=Date.now();
+  if(typeof row.updatedAt!=='number')row.updatedAt=0;
   return row;
 }
 function ensureDataMeta(arr){
@@ -249,7 +249,7 @@ function ensureDataMeta(arr){
       row._id=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('id_'+Date.now()+'_'+Math.floor(Math.random()*1e6));
     }
     used.add(row._id);
-    if(typeof row.updatedAt!=='number')row.updatedAt=Date.now();
+    if(typeof row.updatedAt!=='number')row.updatedAt=0;
   });
   return arr;
 }
@@ -634,6 +634,7 @@ tbody.addEventListener('change',e=>{
   const key=td.dataset.key;
   if(!DATA[i])return;
   DATA[i][key]=el.value;
+  DATA[i].updatedAt=Date.now();
   if(key!=='code'&&key!=='remark')el.title=el.value;
 
   if(key==='status'){
@@ -786,12 +787,13 @@ document.getElementById('fileImport').addEventListener('change',e=>{
         '点击「确定」= 覆盖当前数据（推荐，用于从同事那里同步最新版）\n'+
         '点击「取消」= 与当前数据合并（按任务编号去重，本机已有的保留）'
       );
+      arr.forEach(r=>{if(r&&typeof r.updatedAt!=='number')r.updatedAt=Date.now();});
       if(mode){
         DATA=ensureDataMeta(arr);
       }else{
         const map=new Map();
-        DATA.forEach(r=>{const k=(r.code||'').trim()||('__'+Math.random());map.set(k,r)});
         arr.forEach(r=>{const k=(r.code||'').trim()||('__'+Math.random());map.set(k,r)});
+        DATA.forEach(r=>{const k=(r.code||'').trim()||('__'+Math.random());map.set(k,r)});
         DATA=ensureDataMeta(Array.from(map.values()));
       }
       renderAll();
