@@ -296,6 +296,10 @@ function normalizeRemote(val){
   return [];
 }
 
+function cleanForPush(rows){
+  return (Array.isArray(rows)?rows:[]).filter(r=>r&&((r.code&&String(r.code).trim())||(r.name&&String(r.name).trim())));
+}
+
 function pushRemote(immediate){
   const doPush=()=>{
     try{
@@ -351,7 +355,7 @@ function applyRemoteData(remoteRows){
   const ss=String(d.getSeconds()).padStart(2,'0');
   if(shouldPush){
     lastPushAt=Date.now();
-    DB_REF.set(DATA).then(()=>{
+    DB_REF.set(cleanForPush(DATA)).then(()=>{
       setSaveStatus('云端已同步 '+hh+':'+mm+':'+ss,'saved');
     }).catch(err=>{
       console.warn('云端同步失败：',err);
