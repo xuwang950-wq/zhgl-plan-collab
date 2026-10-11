@@ -343,7 +343,7 @@ function applyRemoteData(remoteRows){
   const dataChanged=JSON.stringify(merged)!==JSON.stringify(remoteRows);
   const shouldPush=needPush||dataChanged;
   DATA=ensureDataMeta(merged);
-  renderAll();
+  renderAll(true);
   try{localStorage.setItem(LS_KEY,JSON.stringify(DATA));}catch(e){}
   const d=new Date();
   const hh=String(d.getHours()).padStart(2,'0');
@@ -590,7 +590,15 @@ function renderBody(){
     return `<tr data-i="${i}">${tds}</tr>`;
   }).join('');
 }
-function renderAll(){renderHead();renderBody();renderStats(false);selectedRow=-1}
+function renderAll(keepSel){
+  const keep=keepSel?selectedRow:-1;
+  renderHead();renderBody();renderStats(false);
+  selectedRow=keep;
+  if(selectedRow>=0&&selectedRow<DATA.length){
+    const tr=document.querySelector(`#tbody tr[data-i="${selectedRow}"]`);
+    if(tr)tr.classList.add('selected');
+  }
+}
 
 function updateRowStatus(i,forceAuto){
   const tr=document.querySelector(`#tbody tr[data-i="${i}"]`);
