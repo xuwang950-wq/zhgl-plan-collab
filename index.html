@@ -233,8 +233,8 @@ function saveDeletedIds(ids){
 function ensureRowMeta(row){
   if(!row||typeof row!=='object')return row;
   if(!row._id){
-    const base=(row.code&&String(row.code).trim())||('row_'+(Math.floor(Math.random()*1e6)));
-    row._id=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('id_'+Date.now()+'_'+base);
+    const base=(row.code&&String(row.code).trim())||'';
+    row._id=base||((typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('id_'+Date.now()+'_'+Math.floor(Math.random()*1e6)));
   }
   if(typeof row.updatedAt!=='number')row.updatedAt=Date.now();
   return row;
@@ -268,7 +268,25 @@ function mergeRows(remoteRows,localRows,deletedIds){
     }
   });
   deleted.forEach(id=>map.delete(id));
-  return Array.from(map.values());
+  return dedupByCode(Array.from(map.values()));
+}
+
+function dedupByCode(rows){
+  const byCode=new Map();
+  const out=[];
+  (Array.isArray(rows)?rows:[]).forEach(r=>{
+    if(!r){return;}
+    const c=(r.code&&String(r.code).trim())||'';
+    if(!c){out.push(r);return;}
+    const ex=byCode.get(c);
+    if(!ex){byCode.set(c,r);out.push(r);return;}
+    if((Number(r.updatedAt)||0)>(Number(ex.updatedAt)||0)){
+      const idx=out.indexOf(ex);
+      if(idx>=0)out[idx]=r;
+      byCode.set(c,r);
+    }
+  });
+  return out;
 }
 
 function normalizeRemote(val){
@@ -293,6 +311,7 @@ function pushRemote(immediate){
         const ss=String(d.getSeconds()).padStart(2,'0');
         setSaveStatus('云端已同步 '+hh+':'+mm+':'+ss,'saved');
         try{localStorage.setItem(LS_KEY,JSON.stringify(DATA));}catch(e){}
+        renderAll();
       }).catch(err=>{
         console.warn('云端同步失败：',err);
         setSaveStatus('云端同步失败，请检查网络','saving');
@@ -319,6 +338,8 @@ function applyRemoteData(remoteRows){
   });
   const needPush=localHasNewer||deleted.some(id=>remoteMap.has(id));
   const merged=mergeRows(remoteRows,DATA,deleted);
+  const dataChanged=JSON.stringify(merged)!==JSON.stringify(remoteRows);
+  const shouldPush=needPush||dataChanged;
   DATA=ensureDataMeta(merged);
   renderAll();
   try{localStorage.setItem(LS_KEY,JSON.stringify(DATA));}catch(e){}
@@ -326,7 +347,7 @@ function applyRemoteData(remoteRows){
   const hh=String(d.getHours()).padStart(2,'0');
   const mm=String(d.getMinutes()).padStart(2,'0');
   const ss=String(d.getSeconds()).padStart(2,'0');
-  if(needPush){
+  if(shouldPush){
     lastPushAt=Date.now();
     DB_REF.set(DATA).then(()=>{
       setSaveStatus('云端已同步 '+hh+':'+mm+':'+ss,'saved');
@@ -365,17 +386,29 @@ function initRemoteSync(){
   });
 }
 
+function handleRemoteRows(remoteRows){
+  if(document.activeElement&&document.activeElement.closest&&document.activeElement.closest('#tbody .cell-input')){
+    pendingRemoteData=remoteRows;
+    return;
+  }
+  applyRemoteData(remoteRows);
+}
+
 function bindRemoteListener(){
   DB_REF.on('value',snap=>{
     const val=snap.val();
     if(val===null||val===undefined)return;
-    const remoteRows=normalizeRemote(val);
-    if(document.activeElement&&document.activeElement.closest&&document.activeElement.closest('#tbody .cell-input')){
-      pendingRemoteData=remoteRows;
-      return;
-    }
-    applyRemoteData(remoteRows);
+    handleRemoteRows(normalizeRemote(val));
   });
+  setInterval(()=>{
+    try{
+      DB_REF.once('value').then(snap=>{
+        const val=snap.val();
+        if(val===null||val===undefined)return;
+        handleRemoteRows(normalizeRemote(val));
+      }).catch(()=>{});
+    }catch(e){}
+  },20000);
 }
 
 /* =========================================================
