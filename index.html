@@ -28,6 +28,7 @@
   .hint{margin-left:auto;font-size:11.5px;color:#8aa2b8}
   .table-wrap{overflow:auto;max-height:72vh}
   table{border-collapse:separate;border-spacing:0;table-layout:fixed}
+  .table-wrap thead{position:sticky;top:0;z-index:5}
   thead th{background:#1f4e79;color:#fff;font-weight:600;font-size:11.5px;padding:8px 6px;text-align:center;line-height:1.35;border-right:1px solid #4a86c4;border-bottom:1px solid #4a86c4;position:sticky;z-index:3;white-space:normal;word-break:break-word}
   tr.group-row th{top:0;background:#2e75b6;font-size:11px;height:28px;z-index:5;letter-spacing:.5px}
   tr.header-row th{top:28px;height:42px;z-index:4}
@@ -94,7 +95,7 @@
   .rank.r3{background:#c08457}
   footer{padding:16px 24px 24px;font-size:11.5px;color:#8aa2b8;line-height:1.9;border-top:1px solid #eef3f9}
   footer b{color:#4a6d8c}
-  @media print{body{background:#fff;padding:0}.toolbar{display:none}.table-wrap{max-height:none;overflow:visible}thead th{position:static}.stats{page-break-before:always}.cell-input{border:none;background:transparent}}
+  @media print{body{background:#fff;padding:0}.toolbar{display:none}.table-wrap{max-height:none;overflow:visible}thead{position:static} thead th{position:static}.stats{page-break-before:always}.cell-input{border:none;background:transparent}}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
